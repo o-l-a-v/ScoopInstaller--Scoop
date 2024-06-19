@@ -13,7 +13,15 @@
 # following arguments are treated as non-option arguments, even if
 # they begin with a hyphen. The "--" itself will not be included in
 # the returned $opts. (POSIX-compatible)
-function getopt([String[]]$argv, [String]$shortopts, [String[]]$longopts) {
+function getopt {
+    Param (
+        [String[]]$argv,
+
+        [String]$shortopts,
+
+        [String[]]$longopts
+    )
+
     $opts = @{}; $rem = @()
 
     function err($msg) {

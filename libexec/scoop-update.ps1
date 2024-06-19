@@ -6,14 +6,16 @@
 # You can use '*' in place of <app> to update all apps.
 #
 # Options:
-#   -f, --force            Force update even when there isn't a newer version
-#   -g, --global           Update a globally installed app
-#   -i, --independent      Don't install dependencies automatically
-#   -k, --no-cache         Don't use the download cache
-#   -s, --skip-hash-check  Skip hash validation (use with caution!)
-#   -q, --quiet            Hide extraneous messages
-#   -a, --all              Update all apps (alternative to '*')
+#   -f, --force             Force update even when there isn't a newer version
+#   -g, --global            Update a globally installed app
+#   -i, --independent       Don't install dependencies automatically
+#   -k, --no-cache          Don't use the download cache
+#   -s, --skip-hash-check   Skip hash validation (use with caution!)
+#   -q, --quiet             Hide extraneous messages
+#   -a, --all               Update all apps (alternative to '*')
+#   -c, --continue-or-error Continue on error, only applies if -all
 
+# Dot source dependencies
 . "$PSScriptRoot\..\lib\getopt.ps1"
 . "$PSScriptRoot\..\lib\json.ps1" # 'save_install_info' in 'manifest.ps1' (indirectly)
 . "$PSScriptRoot\..\lib\system.ps1"
@@ -28,7 +30,8 @@ if (get_config USE_SQLITE_CACHE) {
     . "$PSScriptRoot\..\lib\database.ps1"
 }
 
-$opt, $apps, $err = getopt $args 'gfiksqa' 'global', 'force', 'independent', 'no-cache', 'skip-hash-check', 'quiet', 'all'
+# Handle input parameters
+$opt, $apps, $err = getopt -argv $args -shortopts 'gfiksqac' -longopts 'global', 'force', 'independent', 'no-cache', 'skip-hash-check', 'quiet', 'all', 'continue-on-error'
 if ($err) { "scoop update: $err"; exit 1 }
 $global = $opt.g -or $opt.global
 $force = $opt.f -or $opt.force
@@ -37,8 +40,22 @@ $use_cache = !($opt.k -or $opt.'no-cache')
 $quiet = $opt.q -or $opt.quiet
 $independent = $opt.i -or $opt.independent
 $all = $opt.a -or $opt.all
+$continue_on_error = $opt.c -or $opt.'continue-on-error'
 
-# load config
+# Failproof
+## Require PowerShell version 5 or newer
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Output -InputObject 'PowerShell 5 or later is required to run Scoop.'
+    Write-Output -InputObject 'Upgrade PowerShell: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows'
+    break
+}
+## Don't use --continue-on-error without --all
+if ($continue_on_error -and -not $all) {
+    Write-Output -InputObject '-c / --continue-on-error only works with -a / --all.'
+    break
+}
+
+# Load config
 $configRepo = get_config SCOOP_REPO
 if (!$configRepo) {
     $configRepo = 'https://github.com/ScoopInstaller/Scoop'
@@ -52,12 +69,6 @@ if (!$configBranch) {
     set_config SCOOP_BRANCH $configBranch | Out-Null
 }
 
-if (($PSVersionTable.PSVersion.Major) -lt 5) {
-    # check powershell version
-    Write-Output 'PowerShell 5 or later is required to run Scoop.'
-    Write-Output 'Upgrade PowerShell: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows'
-    break
-}
 $show_update_log = get_config SHOW_UPDATE_LOG $true
 
 function Sync-Scoop {
@@ -257,7 +268,32 @@ function Sync-Bucket {
     }
 }
 
-function update($app, $global, $quiet = $false, $independent, $suggested, $use_cache = $true, $check_hash = $true) {
+function update {
+    Param (
+        [Parameter(Mandatory)]
+        [string] $app,
+
+        [Parameter(Mandatory)]
+        [string] $global,
+
+        [Parameter()]
+        [bool] $quiet = $false,
+
+        [Parameter()]
+        [bool] $independent,
+
+        [Parameter()]
+        [hashtable] $suggested,
+
+        [Parameter()]
+        [bool] $use_cache = $true,
+
+        [Parameter()]
+        [bool] $check_hash = $true,
+
+        [Parameter()]
+        [bool] $continue_on_error = $false
+    )
     $old_version = Select-CurrentVersion -AppName $app -Global:$global
     $old_manifest = installed_manifest $app $old_version $global
     $install = install_info $app $old_version $global
@@ -286,7 +322,7 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
     }
     if (!$version) {
         # installed from a custom bucket/no longer supported
-        error "No manifest available for '$app'."
+        Get-Error "No manifest available for '$app'."
         return
     }
 
@@ -317,7 +353,7 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
                 $ok, $err = check_hash $source $manifest_hash $(show_app $app $bucket)
 
                 if (!$ok) {
-                    error $err
+                    Get-Error $err
                     if (Test-Path $source) {
                         # rm cached file
                         Remove-Item -Force $source
@@ -325,7 +361,7 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
                     if ($url.Contains('sourceforge.net')) {
                         Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
                     }
-                    abort $(new_issue_msg $app $bucket 'hash check failed')
+                    abort $(new_issue_msg $app $bucket 'hash check failed') $(if($continue_on_error){0})
                 }
             }
         }
@@ -386,11 +422,11 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
 
 if (-not ($apps -or $all)) {
     if ($global) {
-        error 'scoop update: --global is invalid when <app> is not specified.'
+        Get-Error 'scoop update: --global is invalid when <app> is not specified.'
         exit 1
     }
     if (!$use_cache) {
-        error 'scoop update: --no-cache is invalid when <app> is not specified.'
+        Get-Error 'scoop update: --no-cache is invalid when <app> is not specified.'
         exit 1
     }
     Sync-Scoop -Log:$show_update_log
@@ -461,7 +497,7 @@ if (-not ($apps -or $all)) {
 
     $suggested = @{}
     # $outdated is a list of ($app, $global) tuples
-    $outdated | ForEach-Object { update @_ $quiet $independent $suggested $use_cache $check_hash }
+    $outdated | ForEach-Object { update @_ $quiet $independent $suggested $use_cache $check_hash $continue_on_error}
 }
 
 exit 0

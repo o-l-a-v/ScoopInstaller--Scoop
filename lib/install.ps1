@@ -5,7 +5,26 @@ function nightly_version($quiet = $false) {
     return "nightly-$(Get-Date -Format 'yyyyMMdd')"
 }
 
-function install_app($app, $architecture, $global, $suggested, $use_cache = $true, $check_hash = $true) {
+function install_app {
+    Param (
+        [Parameter(Mandatory)]
+        [string] $app,
+
+        [Parameter(Mandatory)]
+        [string] $architecture,
+
+        [Parameter(Mandatory)]
+        [string] $global,
+
+        [Parameter()]
+        [hashtable] $suggested,
+
+        [Parameter()]
+        [bool] $use_cache = $true,
+
+        [Parameter()]
+        [bool] $check_hash = $true
+    )
     $app, $manifest, $bucket, $url = Get-Manifest $app
 
     if (!$manifest) {
@@ -26,7 +45,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
 
     $architecture = Get-SupportedArchitecture $manifest $architecture
     if ($null -eq $architecture) {
-        error "'$app' doesn't support current architecture!"
+        Get-Error "'$app' doesn't support current architecture!"
         return
     }
 
@@ -308,9 +327,9 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
         Write-Host ''
 
         if ($lastexitcode -gt 0) {
-            error "Download failed! (Error $lastexitcode) $(aria_exit_code $lastexitcode)"
-            error $urlstxt_content
-            error $aria2
+            Get-Error "Download failed! (Error $lastexitcode) $(aria_exit_code $lastexitcode)"
+            Get-Error $urlstxt_content
+            Get-Error $aria2
             abort $(new_issue_msg $app $bucket 'download via aria2 failed')
         }
 
@@ -337,7 +356,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
             $manifest_hash = hash_for_url $manifest $url $architecture
             $ok, $err = check_hash $data.$url.source $manifest_hash $(show_app $app $bucket)
             if (!$ok) {
-                error $err
+                Get-Error $err
                 if (Test-Path $data.$url.source) {
                     # rm cached file
                     Remove-Item $data.$url.source -Force -ErrorAction SilentlyContinue
@@ -564,7 +583,7 @@ function Invoke-ScoopDownload ($app, $version, $manifest, $bucket, $architecture
                 $manifest_hash = hash_for_url $manifest $url $architecture
                 $ok, $err = check_hash "$dir\$fname" $manifest_hash $(show_app $app $bucket)
                 if (!$ok) {
-                    error $err
+                    Get-Error $err
                     $cached = cache_path $app $version $url
                     if (Test-Path $cached) {
                         # rm cached file
@@ -1107,7 +1126,7 @@ function test_running_process($app, $global) {
             Write-Host $running_processes
             return $false
         } else {
-            error "The following instances of `"$app`" are still running. Close them and try again."
+            Get-Error "The following instances of `"$app`" are still running. Close them and try again."
             Write-Host $running_processes
             return $true
         }
