@@ -40,7 +40,7 @@ function file_name($segment) {
 }
 
 function parse_url($url) {
-    $uri = New-Object Uri $url
+    $uri = [uri]::new($url)
     $uri.pathandquery.substring(1).split('/')
 }
 

@@ -16,7 +16,7 @@ function find_description($url, $html, $redir = $false) {
     # check <meta http-equiv="refresh"> redirect
     $refresh = meta_refresh $meta $url
     if($refresh -and !$redir) {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($refresh)
         $html = (Get-Encoding($wc)).GetString($data)
@@ -111,17 +111,17 @@ function strip_html($html) {
             try {
                 $encoding = [text.encoding]::getencoding($charset)
             } catch {
-                Write-Warning "Unknown charset"
+                Write-Warning 'Unknown charset'
             }
             if($encoding) {
                 $html = ([regex]'&#(\d+);?').replace($html, {
-                    param($m)
-                    try {
-                        return $encoding.getstring($m.Groups[1].Value)
-                    } catch {
-                        return $m.value
-                    }
-                })
+                        param($m)
+                        try {
+                            return $encoding.getstring($m.Groups[1].Value)
+                        } catch {
+                            return $m.value
+                        }
+                    })
             }
         }
     }

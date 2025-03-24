@@ -53,12 +53,12 @@
 param(
     [String] $App = '*',
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
-    })]
+            if (!(Test-Path $_ -Type Container)) {
+                throw "$_ is not a directory!"
+            } else {
+                $true
+            }
+        })]
     [String] $Dir,
     [Switch] $Update,
     [Switch] $ForceUpdate,
@@ -113,7 +113,7 @@ $Queue | ForEach-Object {
 
     $substitutions = Get-VersionSubstitution $json.version # 'autoupdate.ps1'
 
-    $wc = New-Object Net.Webclient
+    $wc = [Net.Webclient]::new()
     if ($json.checkver.useragent) {
         $wc.Headers.Add('User-Agent', (substitute $json.checkver.useragent $substitutions))
     } else {
@@ -206,7 +206,8 @@ $Queue | ForEach-Object {
         $xpath = $json.checkver.xpath
     }
 
-    if ($json.checkver.replace -is [System.String]) { # If `checkver` is [System.String], it has a method called `Replace`
+    if ($json.checkver.replace -is [System.String]) {
+        # If `checkver` is [System.String], it has a method called `Replace`
         $replace = $json.checkver.replace
     }
 
@@ -225,7 +226,7 @@ $Queue | ForEach-Object {
 
     $url = substitute $url $substitutions
 
-    $state = New-Object psobject @{
+    $state = [psobject]@{
         app      = $name
         file     = $file
         url      = $url
@@ -286,13 +287,13 @@ while ($in_progress -gt 0) {
         }
 
         if ($url) {
-            $ms = New-Object System.IO.MemoryStream
+            $ms = [System.IO.MemoryStream]::new()
             $ms.Write($result, 0, $result.Length)
             $ms.Seek(0, 0) | Out-Null
             if ($result[0] -eq 0x1F -and $result[1] -eq 0x8B) {
-                $ms = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionMode]::Decompress)
+                $ms = [System.IO.Compression.GZipStream]::new($ms, [System.IO.Compression.CompressionMode]::Decompress)
             }
-            $page = (New-Object System.IO.StreamReader($ms, (Get-Encoding $wc))).ReadToEnd()
+            $page = ([System.IO.StreamReader]::($ms, (Get-Encoding $wc))).ReadToEnd()
         }
         $source = $url
         if ($script) {
@@ -320,9 +321,9 @@ while ($in_progress -gt 0) {
         if ($xpath) {
             $xml = [xml]$page
             # Find all `significant namespace declarations` from the XML file
-            $nsList = $xml.SelectNodes("//namespace::*[not(. = ../../namespace::*)]")
+            $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
             # Then add them into the NamespaceManager
-            $nsmgr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+            $nsmgr = [System.Xml.XmlNamespaceManager]::new($xml.NameTable)
             $nsList | ForEach-Object {
                 if ($_.LocalName -eq 'xmlns') {
                     $nsmgr.AddNamespace('ns', $_.Value)
@@ -350,7 +351,7 @@ while ($in_progress -gt 0) {
         }
 
         if ($regexp) {
-            $re = New-Object System.Text.RegularExpressions.Regex($regexp)
+            $re = [System.Text.RegularExpressions.Regex]::new($regexp)
             if ($reverse) {
                 $match = $re.Matches($page) | Select-Object -Last 1
             } else {

@@ -11,12 +11,12 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
-    })]
+            if (!(Test-Path $_ -Type Container)) {
+                throw "$_ is not a directory!"
+            } else {
+                $true
+            }
+        })]
     [String] $Dir
 )
 
@@ -43,7 +43,7 @@ $Queue | ForEach-Object {
     }
     # get description from homepage
     try {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $homepage = $wc.DownloadData($manifest.homepage)
         $home_html = (Get-Encoding($wc)).GetString($homepage)

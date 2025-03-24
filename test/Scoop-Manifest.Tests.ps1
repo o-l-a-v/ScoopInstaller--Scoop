@@ -65,19 +65,19 @@ Describe 'Manifest Validator' -Tag 'Validator' {
             ([System.Management.Automation.PSTypeName]'Scoop.Validator').Type | Should -Be 'Scoop.Validator'
     }
     It 'fails with broken schema' {
-        $validator = New-Object Scoop.Validator("$PSScriptRoot/fixtures/manifest/broken_schema.json", $true)
+        $validator = [Scoop.Validator]::new("$PSScriptRoot/fixtures/manifest/broken_schema.json", $true)
         $validator.Validate("$PSScriptRoot/fixtures/manifest/wget.json") | Should -BeFalse
         $validator.Errors.Count | Should -Be 1
         $validator.Errors | Select-Object -First 1 | Should -Match 'broken_schema.*(line 6).*(position 4)'
     }
     It 'fails with broken manifest' {
-        $validator = New-Object Scoop.Validator($schema, $true)
+        $validator = [Scoop.Validator]::new($schema, $true)
         $validator.Validate("$PSScriptRoot/fixtures/manifest/broken_wget.json") | Should -BeFalse
         $validator.Errors.Count | Should -Be 1
         $validator.Errors | Select-Object -First 1 | Should -Match 'broken_wget.*(line 5).*(position 4)'
     }
     It 'fails with invalid manifest' {
-        $validator = New-Object Scoop.Validator($schema, $true)
+        $validator = [Scoop.Validator]::new($schema, $true)
         $validator.Validate("$PSScriptRoot/fixtures/manifest/invalid_wget.json") | Should -BeFalse
         $validator.Errors.Count | Should -Be 16
         $validator.Errors | Select-Object -First 1 | Should -Match "Property 'randomproperty' has not been defined and the schema does not allow additional properties\."

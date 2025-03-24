@@ -24,7 +24,7 @@ Describe 'Manifest validates against the schema' {
     BeforeAll {
         Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Scoop.Validator.dll"
         # Could not use backslash '\' in Linux/macOS for .NET object 'Scoop.Validator'
-        $validator = New-Object Scoop.Validator("$PSScriptRoot/../schema.json", $true)
+        $validator = [Scoop.Validator]::new("$PSScriptRoot/../schema.json", $true)
         $global:quotaExceeded = $false
     }
     It '<_>' -TestCases $manifestFiles {

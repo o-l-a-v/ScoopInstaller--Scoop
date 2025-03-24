@@ -171,7 +171,7 @@ if (get_config USE_SQLITE_CACHE) {
         }
 } else {
     try {
-        $query = New-Object Regex $query, 'IgnoreCase'
+        $query = [Regex]::new($query, 'IgnoreCase')
     } catch {
         abort "Invalid regular expression: $($_.Exception.InnerException.Message)"
     }

@@ -16,7 +16,7 @@ function find_hash_in_rdf([String] $url, [String] $basename) {
     $xml = $null
     try {
         # Download and parse RDF XML file
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
@@ -46,17 +46,17 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     }
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
-        $ms = New-Object System.IO.MemoryStream
+        $ms = [System.IO.MemoryStream]::new()
         $ms.Write($data, 0, $data.Length)
         $ms.Seek(0, 0) | Out-Null
         if ($data[0] -eq 0x1F -and $data[1] -eq 0x8B) {
-            $ms = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionMode]::Decompress)
+            $ms = [System.IO.Compression.GZipStream]::new($ms, [System.IO.Compression.CompressionMode]::Decompress)
         }
-        $hashfile = (New-Object System.IO.StreamReader($ms, (Get-Encoding $wc))).ReadToEnd()
+        $hashfile = ([System.IO.StreamReader]::new($ms, (Get-Encoding $wc))).ReadToEnd()
     } catch [system.net.webexception] {
         Write-Host $_ -ForegroundColor DarkRed
         Write-Host "URL $url is not valid" -ForegroundColor DarkRed
@@ -108,17 +108,17 @@ function find_hash_in_json([String] $url, [Hashtable] $substitutions, [String] $
     $json = $null
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
-        $ms = New-Object System.IO.MemoryStream
+        $ms = [System.IO.MemoryStream]::new()
         $ms.Write($data, 0, $data.Length)
         $ms.Seek(0, 0) | Out-Null
         if ($data[0] -eq 0x1F -and $data[1] -eq 0x8B) {
-            $ms = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionMode]::Decompress)
+            $ms = [System.IO.Compression.GZipStream]::new($ms, [System.IO.Compression.CompressionMode]::Decompress)
         }
-        $json = (New-Object System.IO.StreamReader($ms, (Get-Encoding $wc))).ReadToEnd()
+        $json = ([System.IO.StreamReader]::new($ms, (Get-Encoding $wc))).ReadToEnd()
     } catch [System.Net.WebException] {
         Write-Host $_ -ForegroundColor DarkRed
         Write-Host "URL $url is not valid" -ForegroundColor DarkRed
@@ -136,17 +136,17 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     $xml = $null
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
-        $ms = New-Object System.IO.MemoryStream
+        $ms = [System.IO.MemoryStream]::new()
         $ms.Write($data, 0, $data.Length)
         $ms.Seek(0, 0) | Out-Null
         if ($data[0] -eq 0x1F -and $data[1] -eq 0x8B) {
-            $ms = New-Object System.IO.Compression.GZipStream($ms, [System.IO.Compression.CompressionMode]::Decompress)
+            $ms = [System.IO.Compression.GZipStream]::new($ms, [System.IO.Compression.CompressionMode]::Decompress)
         }
-        $xml = [xml]((New-Object System.IO.StreamReader($ms, (Get-Encoding $wc))).ReadToEnd())
+        $xml = [xml](([System.IO.StreamReader]::new($ms, (Get-Encoding $wc))).ReadToEnd())
     } catch [system.net.webexception] {
         Write-Host $_ -ForegroundColor DarkRed
         Write-Host "URL $url is not valid" -ForegroundColor DarkRed
@@ -161,7 +161,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     # Find all `significant namespace declarations` from the XML file
     $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
     # Then add them into the NamespaceManager
-    $nsmgr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+    $nsmgr = [System.Xml.XmlNamespaceManager]::new($xml.NameTable)
     $nsList | ForEach-Object {
         $nsmgr.AddNamespace($_.LocalName, $_.Value)
     }

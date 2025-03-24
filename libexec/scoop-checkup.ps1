@@ -34,13 +34,13 @@ if (!(Test-HelperInstalled -Helper Dark)) {
     $issues++
 }
 
-$globaldir = New-Object System.IO.DriveInfo($globaldir)
+$globaldir = [System.IO.DriveInfo]::new($globaldir)
 if ($globaldir.DriveFormat -ne 'NTFS') {
     error "Scoop requires an NTFS volume to work! Please point `$env:SCOOP_GLOBAL or 'global_path' variable in '~/.config/scoop/config.json' to another Drive."
     $issues++
 }
 
-$scoopdir = New-Object System.IO.DriveInfo($scoopdir)
+$scoopdir = [System.IO.DriveInfo]::new($scoopdir)
 if ($scoopdir.DriveFormat -ne 'NTFS') {
     error "Scoop requires an NTFS volume to work! Please point `$env:SCOOP or 'root_path' variable in '~/.config/scoop/config.json' to another Drive."
     $issues++
@@ -50,9 +50,9 @@ if ($issues) {
     warn "Found $issues potential $(pluralize $issues problem problems)."
 } elseif ($defenderIssues) {
     info "Found $defenderIssues performance $(pluralize $defenderIssues problem problems)."
-    warn "Security is more important than performance, in most cases."
+    warn 'Security is more important than performance, in most cases.'
 } else {
-    success "No problems identified!"
+    success 'No problems identified!'
 }
 
 exit 0

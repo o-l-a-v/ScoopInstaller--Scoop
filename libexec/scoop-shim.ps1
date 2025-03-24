@@ -117,7 +117,7 @@ switch ($SubCommand) {
             Write-Host '...'
             shim $commandPath $global $shimName $commandArgs
         } else {
-            Write-Host "ERROR: Command path does not exist: " -ForegroundColor Red -NoNewline
+            Write-Host 'ERROR: Command path does not exist: ' -ForegroundColor Red -NoNewline
             Write-Host $($other[1]) -ForegroundColor Cyan
             exit 3
         }
@@ -147,7 +147,7 @@ switch ($SubCommand) {
                 $pattern = $_
                 [void][Regex]::New($pattern)
             } catch {
-                Write-Host "ERROR: Invalid pattern: " -ForegroundColor Red -NoNewline
+                Write-Host 'ERROR: Invalid pattern: ' -ForegroundColor Red -NoNewline
                 Write-Host $pattern -ForegroundColor Magenta
                 exit 1
             }
@@ -195,7 +195,10 @@ switch ($SubCommand) {
             }
             $shimInfo.Alternatives = $shimInfo.Alternatives.Split(' ')
             [System.Management.Automation.Host.ChoiceDescription[]]$altApps = 1..$shimInfo.Alternatives.Length | ForEach-Object {
-                New-Object System.Management.Automation.Host.ChoiceDescription "&$($_)`b$($shimInfo.Alternatives[$_ - 1])", "Sets '$shimName' shim from $($shimInfo.Alternatives[$_ - 1])."
+                [System.Management.Automation.Host.ChoiceDescription]::new(
+                    "&$($_)`b$($shimInfo.Alternatives[$_ - 1])",
+                    "Sets '$shimName' shim from $($shimInfo.Alternatives[$_ - 1])."
+                )
             }
             $selected = $Host.UI.PromptForChoice("Alternatives of '$shimName' command", "Please choose one that provides '$shimName' as default:", $altApps, 0)
             if ($selected -eq 0) {

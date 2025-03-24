@@ -165,7 +165,7 @@ function Invoke-Download ($url, $to, $cookies, $progress) {
     try {
         $s = $wres.getresponsestream()
         $fs = [io.file]::openwrite($to)
-        $buffer = New-Object byte[] 2048
+        $buffer = [byte[]]::new(2048)
         $totalRead = 0
         $sw = [diagnostics.stopwatch]::StartNew()
 
@@ -428,7 +428,7 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
 
         # Set console output encoding to UTF8 for non-ASCII characters printing
         $oriConsoleEncoding = [Console]::OutputEncoding
-        [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
         Invoke-Command ([scriptblock]::Create($aria2)) | ForEach-Object {
             # Skip blank lines
@@ -457,9 +457,9 @@ function Invoke-CachedAria2Download ($app, $version, $manifest, $architecture, $
             warn "Download failed! (Error $lastexitcode) $(aria_exit_code $lastexitcode)"
             warn $urlstxt_content
             warn $aria2
-            warn $(new_issue_msg $app $bucket "download via aria2 failed")
+            warn $(new_issue_msg $app $bucket 'download via aria2 failed')
 
-            Write-Host "Fallback to default downloader ..."
+            Write-Host 'Fallback to default downloader ...'
 
             try {
                 foreach ($url in $urls) {
@@ -563,14 +563,14 @@ function setup_proxy() {
         if ($address -eq 'none') {
             [net.webrequest]::defaultwebproxy = $null
         } elseif ($address -ne 'default') {
-            [net.webrequest]::defaultwebproxy = New-Object net.webproxy "http://$address"
+            [net.webrequest]::defaultwebproxy = [net.webproxy]::new(("http://$address"))
         }
 
         if ($credentials -eq 'currentuser') {
             [net.webrequest]::defaultwebproxy.credentials = [net.credentialcache]::defaultcredentials
         } elseif ($credentials) {
             $username, $password = $credentials -split '(?<!\\):' | ForEach-Object { $_ -replace '\\([@:])', '$1' }
-            [net.webrequest]::defaultwebproxy.credentials = New-Object net.networkcredential($username, $password)
+            [net.webrequest]::defaultwebproxy.credentials = [net.networkcredential]::new($username, $password)
         }
     } catch {
         warn "Failed to use proxy '$proxy': $($_.exception.message)"
@@ -687,7 +687,7 @@ function url_remote_filename($url) {
     # Unlike url_filename which can be tricked by appending a
     # URL fragment (e.g. #/dl.7z, useful for coercing a local filename),
     # this function extracts the original filename from the URL.
-    $uri = (New-Object URI $url)
+    $uri = [uri]::new($url)
     $basename = Split-Path $uri.PathAndQuery -Leaf
     If ($basename -match '.*[?=]+([\w._-]+)') {
         $basename = $matches[1]

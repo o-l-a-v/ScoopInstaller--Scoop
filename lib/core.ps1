@@ -113,7 +113,7 @@ function set_config {
 
     if ($null -eq $scoopConfig -or $scoopConfig.Count -eq 0) {
         ensure (Split-Path -Path $configFile) | Out-Null
-        $scoopConfig = New-Object -TypeName PSObject
+        $scoopConfig = [PSObject]::new()
     }
 
     if ($value -eq [bool]::TrueString -or $value -eq [bool]::FalseString) {
@@ -290,10 +290,10 @@ function is_admin {
 }
 
 # messages
-function abort($msg, [int] $exit_code=1) { write-host $msg -f red; exit $exit_code }
-function error($msg) { write-host "ERROR $msg" -f darkred }
-function warn($msg) {  write-host "WARN  $msg" -f darkyellow }
-function info($msg) {  write-host "INFO  $msg" -f darkgray }
+function abort($msg, [int] $exit_code=1) { Write-Host $msg -f red; exit $exit_code }
+function error($msg) { Write-Host "ERROR $msg" -f darkred }
+function warn($msg) {  Write-Host "WARN  $msg" -f darkyellow }
+function info($msg) {  Write-Host "INFO  $msg" -f darkgray }
 function debug($obj) {
     if ((get_config DEBUG $false) -ine 'true' -and $env:SCOOP_DEBUG -ine 'true') {
         return
@@ -323,7 +323,7 @@ function debug($obj) {
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
     }
 }
-function success($msg) { write-host $msg -f darkgreen }
+function success($msg) { Write-Host $msg -f darkgreen }
 
 function filesize($length) {
     $gb = [math]::pow(2, 30)
@@ -331,11 +331,11 @@ function filesize($length) {
     $kb = [math]::pow(2, 10)
 
     if($length -gt $gb) {
-        "{0:n1} GB" -f ($length / $gb)
+        '{0:n1} GB' -f ($length / $gb)
     } elseif($length -gt $mb) {
-        "{0:n1} MB" -f ($length / $mb)
+        '{0:n1} MB' -f ($length / $mb)
     } elseif($length -gt $kb) {
-        "{0:n1} KB" -f ($length / $kb)
+        '{0:n1} KB' -f ($length / $kb)
     } else {
         if ($null -eq $length) {
             $length = 0
@@ -382,7 +382,7 @@ function cache_path($app, $version, $url) {
 }
 
 # apps
-function sanitary_path($path) { return [regex]::replace($path, "[/\\?:*<>|]", "") }
+function sanitary_path($path) { return [regex]::replace($path, '[/\\?:*<>|]', '') }
 function installed($app, [Nullable[bool]]$global) {
     if ($null -eq $global) {
         return (installed $app $false) -or (installed $app $true)
@@ -586,14 +586,14 @@ function app_status($app, $global) {
 }
 
 function appname_from_url($url) {
-    (split-path $url -leaf) -replace '.json$', ''
+    (Split-Path $url -Leaf) -replace '.json$', ''
 }
 
 # paths
-function fname($path) { split-path $path -leaf }
+function fname($path) { Split-Path $path -Leaf }
 function strip_ext($fname) { $fname -replace '\.[^\.]*$', '' }
 function strip_filename($path) { $path -replace [regex]::escape((fname $path)) }
-function strip_fragment($url) { $url -replace (new-object uri $url).fragment }
+function strip_fragment($url) { $url -replace ([uri]::new($url)).fragment }
 function ensure($dir) {
     if (!(Test-Path -Path $dir)) {
         New-Item -Path $dir -ItemType Directory | Out-Null
@@ -651,39 +651,39 @@ function run($exe, $arg, $msg, $continue_exit_codes) {
 }
 
 function Invoke-ExternalCommand {
-    [CmdletBinding(DefaultParameterSetName = "Default")]
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
     [OutputType([Boolean])]
     param (
         [Parameter(Mandatory = $true, Position = 0)]
-        [Alias("Path")]
+        [Alias('Path')]
         [ValidateNotNullOrEmpty()]
         [String]
         $FilePath,
         [Parameter(Position = 1)]
-        [Alias("Args")]
+        [Alias('Args')]
         [String[]]
         $ArgumentList,
-        [Parameter(ParameterSetName = "UseShellExecute")]
+        [Parameter(ParameterSetName = 'UseShellExecute')]
         [Switch]
         $RunAs,
-        [Parameter(ParameterSetName = "UseShellExecute")]
+        [Parameter(ParameterSetName = 'UseShellExecute')]
         [Switch]
         $Quiet,
-        [Alias("Msg")]
+        [Alias('Msg')]
         [String]
         $Activity,
-        [Alias("cec")]
+        [Alias('cec')]
         [Hashtable]
         $ContinueExitCodes,
-        [Parameter(ParameterSetName = "Default")]
-        [Alias("Log")]
+        [Parameter(ParameterSetName = 'Default')]
+        [Alias('Log')]
         [String]
         $LogPath
     )
     if ($Activity) {
         Write-Host "$Activity " -NoNewline
     }
-    $Process = New-Object System.Diagnostics.Process
+    $Process = [System.Diagnostics.Process]::new()
     $Process.StartInfo.FileName = $FilePath
     $Process.StartInfo.UseShellExecute = $false
     if ($LogPath) {
@@ -741,7 +741,7 @@ function Invoke-ExternalCommand {
         [void]$Process.Start()
     } catch {
         if ($Activity) {
-            Write-Host "error." -ForegroundColor DarkRed
+            Write-Host 'error.' -ForegroundColor DarkRed
         }
         error $_.Exception.Message
         return $false
@@ -760,26 +760,26 @@ function Invoke-ExternalCommand {
     if ($Process.ExitCode -ne 0) {
         if ($ContinueExitCodes -and ($ContinueExitCodes.ContainsKey($Process.ExitCode))) {
             if ($Activity) {
-                Write-Host "done." -ForegroundColor DarkYellow
+                Write-Host 'done.' -ForegroundColor DarkYellow
             }
             warn $ContinueExitCodes[$Process.ExitCode]
             return $true
         } else {
             if ($Activity) {
-                Write-Host "error." -ForegroundColor DarkRed
+                Write-Host 'error.' -ForegroundColor DarkRed
             }
             error "Exit code was $($Process.ExitCode)!"
             return $false
         }
     }
     if ($Activity) {
-        Write-Host "done." -ForegroundColor Green
+        Write-Host 'done.' -ForegroundColor Green
     }
     return $true
 }
 
 function isFileLocked([string]$path) {
-    $file = New-Object System.IO.FileInfo $path
+    $file = [System.IO.FileInfo]::new($path)
 
     if ((Test-Path -Path $path) -eq $false) {
         return $false
@@ -791,8 +791,7 @@ function isFileLocked([string]$path) {
             $stream.Close()
         }
         return $false
-    }
-    catch {
+    } catch {
         # file is locked by a process.
         return $true
     }
@@ -806,7 +805,7 @@ function movedir($from, $to) {
     $from = $from.trimend('\')
     $to = $to.trimend('\')
 
-    $proc = New-Object System.Diagnostics.Process
+    $proc = [System.Diagnostics.Process]::new()
     $proc.StartInfo.FileName = 'robocopy.exe'
     $proc.StartInfo.Arguments = "`"$from`" `"$to`" /e /move"
     $proc.StartInfo.RedirectStandardOutput = $true
@@ -906,7 +905,8 @@ function shim($path, $global, $name, $arg) {
         }
 
         $target_subsystem = Get-PESubsystem $resolved_path
-        if ($target_subsystem -eq 2) { # we only want to make shims GUI
+        if ($target_subsystem -eq 2) {
+            # we only want to make shims GUI
             Write-Output "Making $shim.exe a GUI binary."
             Set-PESubsystem "$shim.exe" $target_subsystem | Out-Null
         }
@@ -920,7 +920,7 @@ function shim($path, $global, $name, $arg) {
 
         warn_on_overwrite $shim $path
         @(
-            "#!/bin/sh",
+            '#!/bin/sh',
             "# $resolved_path",
             "MSYS2_ARG_CONV_EXCL=/C cmd.exe /C `"$resolved_path`" $arg `"$@`""
         ) -join "`n" | Out-UTF8File $shim -NoNewLine
@@ -948,24 +948,24 @@ function shim($path, $global, $name, $arg) {
         warn_on_overwrite "$shim.cmd" $path
         @(
             "@rem $resolved_path",
-            "@echo off",
-            "where /q pwsh.exe",
-            "if %errorlevel% equ 0 (",
+            '@echo off',
+            'where /q pwsh.exe',
+            'if %errorlevel% equ 0 (',
             "    pwsh -noprofile -ex unrestricted -file `"$resolved_path`" $arg %*",
-            ") else (",
+            ') else (',
             "    powershell -noprofile -ex unrestricted -file `"$resolved_path`" $arg %*",
-            ")"
+            ')'
         ) -join "`r`n" | Out-UTF8File "$shim.cmd"
 
         warn_on_overwrite $shim $path
         @(
-            "#!/bin/sh",
+            '#!/bin/sh',
             "# $resolved_path",
-            "if command -v pwsh.exe > /dev/null 2>&1; then",
+            'if command -v pwsh.exe > /dev/null 2>&1; then',
             "    pwsh.exe -noprofile -ex unrestricted -file `"$resolved_path`" $arg `"$@`"",
-            "else",
+            'else',
             "    powershell.exe -noprofile -ex unrestricted -file `"$resolved_path`" $arg `"$@`"",
-            "fi"
+            'fi'
         ) -join "`n" | Out-UTF8File $shim -NoNewLine
     } elseif ($path -match '\.jar$') {
         warn_on_overwrite "$shim.cmd" $path
@@ -973,12 +973,12 @@ function shim($path, $global, $name, $arg) {
             "@rem $resolved_path",
             "@pushd $(Split-Path $resolved_path -Parent)",
             "@java -jar `"$resolved_path`" $arg %*",
-            "@popd"
+            '@popd'
         ) -join "`r`n" | Out-UTF8File "$shim.cmd"
 
         warn_on_overwrite $shim $path
         @(
-            "#!/bin/sh",
+            '#!/bin/sh',
             "# $resolved_path",
             "if [ `$WSL_INTEROP ]",
             'then',
@@ -1097,7 +1097,7 @@ function Confirm-InstallationStatus {
                 $Installed += , @($App, $true)
             } elseif (Test-Path (appdir $App $false)) {
                 error "'$App' isn't installed globally, but it may be installed locally."
-                warn "Try again without the --global (or -g) flag instead."
+                warn 'Try again without the --global (or -g) flag instead.'
             } else {
                 error "'$App' isn't installed."
             }
@@ -1106,7 +1106,7 @@ function Confirm-InstallationStatus {
                 $Installed += , @($App, $false)
             } elseif (Test-Path (appdir $App $true)) {
                 error "'$App' isn't installed locally, but it may be installed globally."
-                warn "Try again with the --global (or -g) flag instead."
+                warn 'Try again with the --global (or -g) flag instead.'
             } else {
                 error "'$App' isn't installed."
             }
@@ -1180,7 +1180,7 @@ function Test-ScoopCoreOnHold() {
     if ($null -eq $hold_update_until) {
         return $false
     }
-    $parsed_date = New-Object -TypeName DateTime
+    $parsed_date = [datetime]::new()
     if ([System.DateTime]::TryParse($hold_update_until, $null, [System.Globalization.DateTimeStyles]::AssumeLocal, [ref]$parsed_date)) {
         if ((New-TimeSpan $parsed_date).TotalSeconds -lt 0) {
             warn "Skipping self-update of Scoop Core until $($parsed_date.ToLocalTime())..."
@@ -1225,7 +1225,7 @@ function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
 function Out-UTF8File {
     param(
         [Parameter(Mandatory = $True, Position = 0)]
-        [Alias("Path")]
+        [Alias('Path')]
         [String] $FilePath,
         [Switch] $Append,
         [Switch] $NoNewLine,

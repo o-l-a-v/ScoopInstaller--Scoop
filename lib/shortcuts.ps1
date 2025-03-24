@@ -3,7 +3,7 @@ function create_startmenu_shortcuts($manifest, $dir, $global, $arch) {
     $shortcuts = @(arch_specific 'shortcuts' $manifest $arch)
     $shortcuts | Where-Object { $_ -ne $null } | ForEach-Object {
         $target = [System.IO.Path]::Combine($dir, $_.item(0))
-        $target = New-Object System.IO.FileInfo($target)
+        $target = [System.IO.FileInfo]::new($target)
         $name = $_.item(1)
         $arguments = ''
         $icon = $null
@@ -12,7 +12,7 @@ function create_startmenu_shortcuts($manifest, $dir, $global, $arch) {
         }
         if ($_.length -ge 4) {
             $icon = [System.IO.Path]::Combine($dir, $_.item(3))
-            $icon = New-Object System.IO.FileInfo($icon)
+            $icon = [System.IO.FileInfo]::new($icon)
         }
         $arguments = (substitute $arguments @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
         startmenu_shortcut $target $name $arguments $icon $global
@@ -44,7 +44,7 @@ function startmenu_shortcut([System.IO.FileInfo] $target, $shortcutName, $argume
         $subdirectory = ensure $([System.IO.Path]::Combine($scoop_startmenu_folder, $subdirectory))
     }
 
-    $wsShell = New-Object -ComObject WScript.Shell
+    $wsShell = [WScript.Shell]::new()
     $wsShell = $wsShell.CreateShortcut("$scoop_startmenu_folder\$shortcutName.lnk")
     $wsShell.TargetPath = $target.FullName
     $wsShell.WorkingDirectory = $target.DirectoryName

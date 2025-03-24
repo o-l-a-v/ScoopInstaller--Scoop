@@ -95,10 +95,10 @@ function ConvertToPrettyJson {
 function json_path([String] $json, [String] $jsonpath, [Hashtable] $substitutions, [Boolean] $reverse, [Boolean] $single) {
     Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Newtonsoft.Json.dll"
     if ($null -ne $substitutions) {
-        $jsonpath = substitute $jsonpath $substitutions ($jsonpath -like "*=~*")
+        $jsonpath = substitute $jsonpath $substitutions ($jsonpath -like '*=~*')
     }
     try {
-        $settings = New-Object -Type Newtonsoft.Json.JsonSerializerSettings
+        $settings = [Newtonsoft.Json.JsonSerializerSettings]::new()
         $settings.DateParseHandling = [Newtonsoft.Json.DateParseHandling]::None
         $obj = [Newtonsoft.Json.JsonConvert]::DeserializeObject($json, $settings)
     } catch [Newtonsoft.Json.JsonReaderException] {

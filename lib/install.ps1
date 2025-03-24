@@ -477,7 +477,7 @@ function persist_data($manifest, $original_dir, $persist_dir) {
                 # so we create a directory by default. to avoid this, use pre_install
                 # to create the source file before persisting (DON'T use post_install)
             } else {
-                $target = New-Object System.IO.DirectoryInfo($target)
+                $target = [System.IO.DirectoryInfo]::new($target)
                 ensure $target | Out-Null
             }
 
@@ -522,8 +522,8 @@ function unlink_persist_data($manifest, $dir) {
 function persist_permission($manifest, $global) {
     if ($global -and $manifest.persist -and (is_admin)) {
         $path = persistdir $null $global
-        $user = New-Object System.Security.Principal.SecurityIdentifier 'S-1-5-32-545'
-        $target_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, 'Write', 'ObjectInherit', 'none', 'Allow')
+        $user = [System.Security.Principal.SecurityIdentifier]::new('S-1-5-32-545')
+        $target_rule = [System.Security.AccessControl.FileSystemAccessRule]::new($user, 'Write', 'ObjectInherit', 'none', 'Allow')
         $acl = Get-Acl -Path $path
         $acl.SetAccessRule($target_rule)
         $acl | Set-Acl -Path $path

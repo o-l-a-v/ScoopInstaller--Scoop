@@ -14,7 +14,7 @@ function parse_json($path) {
 function url_manifest($url) {
     $str = $null
     try {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
         $str = (Get-Encoding($wc)).GetString($data)
@@ -74,7 +74,7 @@ function manifest($app, $bucket, $url) {
 
 function save_installed_manifest($app, $bucket, $dir, $url) {
     if ($url) {
-        $wc = New-Object Net.Webclient
+        $wc = [Net.Webclient]::new()
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadData($url)
         (Get-Encoding($wc)).GetString($data) | Out-UTF8File "$dir\manifest.json"

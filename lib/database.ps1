@@ -61,7 +61,7 @@ function Open-ScoopDB {
         }
     }
     $dbPath = Join-Path $scoopdir 'scoop.db'
-    $db = New-Object -TypeName System.Data.SQLite.SQLiteConnection
+    $db = [System.Data.SQLite.SQLiteConnection]::new()
     $db.ConnectionString = "Data Source=$dbPath"
     $db.ParseViaFramework = $true # Allow UNC path
     $db.Open()
@@ -250,8 +250,8 @@ function Select-ScoopDBItem {
 
     begin {
         $db = Open-ScoopDB
-        $dbAdapter = New-Object -TypeName System.Data.SQLite.SQLiteDataAdapter
-        $result = New-Object System.Data.DataTable
+        $dbAdapter = [System.Data.SQLite.SQLiteDataAdapter]::new()
+        $result = [System.Data.DataTable]::new()
         $dbQuery = "SELECT * FROM app WHERE $(($From -join ' LIKE @Pattern OR ') + ' LIKE @Pattern')"
         $dbQuery = "SELECT * FROM ($($dbQuery + ' ORDER BY version DESC')) GROUP BY name, bucket"
         $dbCommand = $db.CreateCommand()
@@ -306,8 +306,8 @@ function Get-ScoopDBItem {
 
     begin {
         $db = Open-ScoopDB
-        $dbAdapter = New-Object -TypeName System.Data.SQLite.SQLiteDataAdapter
-        $result = New-Object System.Data.DataTable
+        $dbAdapter = [System.Data.SQLite.SQLiteDataAdapter]::new()
+        $result = [System.Data.DataTable]::new()
         $dbQuery = 'SELECT * FROM app WHERE name = @Name AND bucket = @Bucket'
         if ($Version) {
             $dbQuery += ' AND version = @Version'

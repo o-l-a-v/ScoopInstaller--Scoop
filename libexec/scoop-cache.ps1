@@ -16,7 +16,7 @@ param($cmd)
 
 function cacheinfo($file) {
     $app, $version, $url = $file.Name -split '#'
-    New-Object PSObject -Property @{ Name = $app; Version = $version; Length = $file.Length }
+    [psobject]@{ Name = $app; Version = $version; Length = $file.Length }
 }
 
 function cacheshow($app) {

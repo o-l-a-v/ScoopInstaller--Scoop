@@ -39,7 +39,7 @@ Describe 'Code Syntax' -ForEach @(, $repo_files) -Tag 'File' {
                     $errors = $null
                     $null = [System.Management.Automation.PSParser]::Tokenize($contents, [ref]$errors)
 
-                    New-Object psobject -Property @{
+                    [psobject]@{
                         Path              = $scriptPath
                         SyntaxErrorsFound = ($errors.Count -gt 0)
                     }
